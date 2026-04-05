@@ -3,6 +3,11 @@ import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'customIngredients';
 const SELECTED_KEY = 'selectedIngredients';
+const MODE_KEY = 'recipeMode';
+const SOURCE_KEY = 'recipeSource';
+
+export type RecipeMode = 'open' | 'restrictive';
+export type RecipeSource = 'ai' | 'found';
 
 function createLocalStorageStore<T>(key: string, defaultValue: T) {
 	const storedValue = browser ? localStorage.getItem(key) : null;
@@ -21,6 +26,8 @@ function createLocalStorageStore<T>(key: string, defaultValue: T) {
 
 export const customIngredients = createLocalStorageStore<string[]>(STORAGE_KEY, []);
 export const selectedIngredients = createLocalStorageStore<string[]>(SELECTED_KEY, []);
+export const recipeMode = createLocalStorageStore<RecipeMode>(MODE_KEY, 'open');
+export const recipeSource = createLocalStorageStore<RecipeSource>(SOURCE_KEY, 'ai');
 
 export function addIngredient(ingredient: string) {
 	const normalized = ingredient.toLowerCase().trim();

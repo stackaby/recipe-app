@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { selectedIngredients } from '$lib/stores/ingredients';
+	import { selectedIngredients, recipeMode, recipeSource } from '$lib/stores/ingredients';
 	import { savedRecipes } from '$lib/stores/recipes';
 	import { modalRecipe, modalLoading, setModalLoading, closeRecipeModal } from '$lib/stores/modal';
 	
 	interface RecipeOption {
 		name: string;
 		description: string;
+		id?: number;
+		image?: string;
 	}
 	
 	let recipes = $state<RecipeOption[]>([]);
@@ -24,19 +26,40 @@
 		recipes = [];
 		
 		try {
-			const response = await fetch('/api/generate-recipes', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ingredients: $selectedIngredients })
-			});
-			
-			const data = await response.json();
-			
-			if (!response.ok) {
-				throw new Error(data.error || 'Failed to generate recipes');
+			if ($recipeSource === 'found') {
+				const response = await fetch('/api/search-recipes', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						ingredients: $selectedIngredients
+					})
+				});
+				
+				const data = await response.json();
+				
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to search recipes');
+				}
+				
+				recipes = data.recipes;
+			} else {
+				const response = await fetch('/api/generate-recipes', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						ingredients: $selectedIngredients,
+						mode: $recipeMode 
+					})
+				});
+				
+				const data = await response.json();
+				
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to generate recipes');
+				}
+				
+				recipes = data.recipes;
 			}
-			
-			recipes = data.recipes;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'An error occurred';
 		} finally {
@@ -49,36 +72,75 @@
 		modalRecipe.set(null);
 		
 		try {
-			const response = await fetch('/api/generate-recipe', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					recipeName: recipe.name,
-					ingredients: $selectedIngredients
-				})
-			});
-			
-			const data = await response.json();
-			
-			if (!response.ok) {
-				throw new Error(data.error || 'Failed to generate recipe');
+			if ($recipeSource === 'found' && recipe.id) {
+				const response = await fetch('/api/recipe-details', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ recipeId: recipe.id })
+				});
+				
+				const data = await response.json();
+				
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to fetch recipe');
+				}
+				
+				const savedRecipe = savedRecipes.saveRecipe({
+					name: data.recipe.name,
+					description: `${data.recipe.usedIngredients?.length || 0} ingredients matched`,
+					ingredients: [],
+					availableIngredients: [],
+					neededIngredients: data.recipe.missedIngredients || [],
+					instructions: data.recipe.instructions,
+					prepTime: String(data.recipe.prepTime || 0),
+					cookTime: String(data.recipe.cookTime || 0),
+					servings: data.recipe.servings || 4,
+					sourceIngredients: [...$selectedIngredients],
+					mode: 'open',
+					source: 'found',
+					sourceName: data.recipe.sourceName,
+					sourceUrl: data.recipe.sourceUrl,
+					imageUrl: data.recipe.image
+				});
+				
+				modalRecipe.set(savedRecipe);
+			} else {
+				const response = await fetch('/api/generate-recipe', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						recipeName: recipe.name,
+						ingredients: $selectedIngredients,
+						mode: $recipeMode
+					})
+				});
+				
+				const data = await response.json();
+				
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to generate recipe');
+				}
+				
+				const savedRecipe = savedRecipes.saveRecipe({
+					name: data.recipe.name,
+					description: data.recipe.description,
+					ingredients: data.recipe.ingredients,
+					availableIngredients: data.recipe.availableIngredients,
+					neededIngredients: data.recipe.neededIngredients,
+					instructions: data.recipe.instructions,
+					prepTime: data.recipe.prepTime,
+					cookTime: data.recipe.cookTime,
+					servings: data.recipe.servings,
+					sourceIngredients: [...$selectedIngredients],
+					mode: data.recipe.mode,
+					source: 'ai'
+				});
+				
+				modalRecipe.set(savedRecipe);
 			}
-			
-			const savedRecipe = savedRecipes.saveRecipe({
-				name: data.recipe.name,
-				description: data.recipe.description,
-				ingredients: data.recipe.ingredients,
-				instructions: data.recipe.instructions,
-				prepTime: data.recipe.prepTime,
-				cookTime: data.recipe.cookTime,
-				servings: data.recipe.servings,
-				sourceIngredients: [...$selectedIngredients]
-			});
-			
-			modalRecipe.set(savedRecipe);
 		} catch (e) {
 			closeRecipeModal();
-			error = e instanceof Error ? e.message : 'Failed to generate recipe';
+			error = e instanceof Error ? e.message : 'Failed to load recipe';
 		} finally {
 			setModalLoading(false);
 		}
@@ -100,14 +162,14 @@
 <div class="page-content">
 	<header>
 		<button class="back-btn" onclick={goToHome}>← Back</button>
-		<h1>Recipe Ideas</h1>
+		<h1>{ $recipeSource === 'ai' ? 'Recipe Ideas' : 'Found Recipes' }</h1>
 		<p class="subtitle">Based on: {$selectedIngredients.join(', ')}</p>
 	</header>
 	
 	{#if loading}
 		<div class="loading">
 			<div class="spinner"></div>
-			<p>Generating delicious recipes...</p>
+			<p>{$recipeSource === 'ai' ? 'Generating delicious recipes...' : 'Searching for recipes...'}</p>
 		</div>
 	{:else if error}
 		<div class="error">
@@ -118,6 +180,11 @@
 		<div class="recipes-grid">
 			{#each recipes as recipe}
 				<button class="recipe-card" onclick={() => selectRecipe(recipe)}>
+					{#if recipe.image}
+						<div class="card-image">
+							<img src={recipe.image} alt={recipe.name} />
+						</div>
+					{/if}
 					<h3>{recipe.name}</h3>
 					<p>{recipe.description}</p>
 				</button>
@@ -127,7 +194,7 @@
 		<div class="actions">
 			<button class="regenerate-btn" onclick={generateRecipes}>
 				<span class="icon">🔄</span>
-				Generate New Recipes
+				{$recipeSource === 'ai' ? 'Generate New Recipes' : 'Search Again'}
 			</button>
 		</div>
 	{/if}
@@ -242,6 +309,19 @@
 		border-color: #3b82f6;
 		box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 		transform: translateY(-2px);
+	}
+	
+	.card-image {
+		margin: -1.5rem -1.5rem 1rem -1.5rem;
+		height: 160px;
+		overflow: hidden;
+		border-radius: 10px 10px 0 0;
+	}
+	
+	.card-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
 	}
 	
 	.recipe-card h3 {

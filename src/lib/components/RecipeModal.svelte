@@ -170,12 +170,36 @@
 						</header>
 						
 						<section class="recipe-section">
-							<h3>Ingredients</h3>
-							<ul class="ingredient-list">
-								{#each $modalRecipe.ingredients as ingredient}
-									<li>{ingredient}</li>
-								{/each}
-							</ul>
+							{#if $modalRecipe.availableIngredients?.length > 0}
+								<h3>What You Have</h3>
+								<ul class="ingredient-list available">
+									{#each $modalRecipe.availableIngredients as ingredient}
+										<li>
+											<span class="check">✓</span>
+											{ingredient}
+										</li>
+									{/each}
+								</ul>
+								
+								{#if $modalRecipe.neededIngredients?.length > 0}
+									<h3 class="shopping-title">Shopping List</h3>
+									<ul class="ingredient-list needed">
+										{#each $modalRecipe.neededIngredients as ingredient}
+											<li>
+												<span class="plus">+</span>
+												{ingredient}
+											</li>
+										{/each}
+									</ul>
+								{/if}
+							{:else}
+								<h3>Ingredients</h3>
+								<ul class="ingredient-list">
+									{#each $modalRecipe.ingredients as ingredient}
+										<li>{ingredient}</li>
+									{/each}
+								</ul>
+							{/if}
 						</section>
 						
 						<section class="recipe-section">
@@ -191,6 +215,14 @@
 							<h4>Made with your ingredients</h4>
 							<p class="source-list">{$modalRecipe.sourceIngredients.join(', ')}</p>
 						</section>
+						
+						{#if $modalRecipe.source === 'found' && $modalRecipe.sourceUrl}
+							<section class="recipe-section attribution">
+								<p class="attribution-text">
+									Recipe from <a href={$modalRecipe.sourceUrl} target="_blank" rel="noopener noreferrer">{$modalRecipe.sourceName || 'Spoonacular'} ↗</a>
+								</p>
+							</section>
+						{/if}
 					</div>
 				{/if}
 			{/if}
@@ -477,6 +509,37 @@
 		color: #3b82f6;
 	}
 	
+	.shopping-title {
+		margin-top: 1.5rem !important;
+	}
+	
+	.ingredient-list.available li::before {
+		content: none;
+	}
+	
+	.ingredient-list.available .check {
+		color: #10b981;
+		font-weight: 600;
+		margin-right: 0.5rem;
+	}
+	
+	.ingredient-list.needed {
+		background: #fef3c7;
+		padding: 0.75rem;
+		border-radius: 8px;
+		margin-top: 0.5rem;
+	}
+	
+	.ingredient-list.needed li::before {
+		content: none;
+	}
+	
+	.ingredient-list.needed .plus {
+		color: #f59e0b;
+		font-weight: 600;
+		margin-right: 0.5rem;
+	}
+	
 	.instruction-list {
 		padding-left: 1.5rem;
 		margin: 0;
@@ -507,5 +570,29 @@
 		color: #64748b;
 		margin: 0;
 		line-height: 1.5;
+	}
+	
+	.attribution {
+		background: #f0fdf4;
+		padding: 0.75rem 1rem;
+		border-radius: 8px;
+		margin-bottom: 0;
+		border: 1px solid #bbf7d0;
+	}
+	
+	.attribution-text {
+		font-size: 0.8125rem;
+		color: #166534;
+		margin: 0;
+	}
+	
+	.attribution-text a {
+		color: #15803d;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	
+	.attribution-text a:hover {
+		text-decoration: underline;
 	}
 </style>

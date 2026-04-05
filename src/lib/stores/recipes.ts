@@ -6,11 +6,17 @@ export interface SavedRecipe {
 	name: string;
 	description: string;
 	ingredients: string[];
+	availableIngredients: string[];
+	neededIngredients: string[];
 	instructions: string[];
 	prepTime: string;
 	cookTime: string;
 	servings: number;
 	sourceIngredients: string[];
+	mode: 'open' | 'restrictive';
+	source: 'ai' | 'found';
+	sourceName?: string;
+	sourceUrl?: string;
 	imageUrl?: string;
 	createdAt: string;
 }

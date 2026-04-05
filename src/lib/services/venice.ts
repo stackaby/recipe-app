@@ -1,4 +1,5 @@
 import { VENICE_API_KEY } from '$env/static/private';
+import type { RecipeMode } from '$lib/stores/ingredients';
 
 const VENICE_BASE_URL = 'https://api.venice.ai/api/v1';
 
@@ -11,14 +12,23 @@ export interface FullRecipe {
 	name: string;
 	description: string;
 	ingredients: string[];
+	availableIngredients: string[];
+	neededIngredients: string[];
 	instructions: string[];
 	prepTime: string;
 	cookTime: string;
 	servings: number;
+	mode: RecipeMode;
 }
 
-export async function generateRecipeNames(ingredients: string[]): Promise<RecipeOption[]> {
+export async function generateRecipeNames(ingredients: string[], mode: RecipeMode): Promise<RecipeOption[]> {
+	const modeInstruction = mode === 'restrictive'
+		? 'The recipes should ONLY use the provided ingredients plus common pantry staples (salt, pepper, cooking oil, butter, water). Do not suggest additional ingredients.'
+		: 'The recipes can use the provided ingredients as a base and may suggest additional ingredients the cook might need to purchase.';
+	
 	const prompt = `Given these ingredients: ${ingredients.join(', ')}
+
+${modeInstruction}
 
 Generate 5 creative recipe ideas. For each recipe, provide:
 1. A catchy recipe name
@@ -73,25 +83,40 @@ Only return the JSON array, no other text.`;
 
 export async function generateFullRecipe(
 	recipeName: string,
-	availableIngredients: string[]
+	availableIngredients: string[],
+	mode: RecipeMode
 ): Promise<FullRecipe> {
+	const pantryStaples = 'salt, pepper, cooking oil, olive oil, butter, water';
+	
+	const modeInstruction = mode === 'restrictive'
+		? `IMPORTANT: Use ONLY these ingredients: ${availableIngredients.join(', ')}.
+You may also use common pantry staples (${pantryStaples}) as needed.
+Do NOT include any other ingredients. The "neededIngredients" array must be EMPTY.`
+		: `Use these ingredients as a base: ${availableIngredients.join(', ')}.
+You may suggest additional ingredients the cook will need to purchase.
+Separate ingredients into "availableIngredients" (what they have) and "neededIngredients" (what to buy).
+Common pantry staples (${pantryStaples}) can be included if needed.`;
+
 	const prompt = `Create a complete recipe for "${recipeName}".
 
-The cook has these ingredients available: ${availableIngredients.join(', ')}
+${modeInstruction}
 
 Provide a complete recipe with:
 1. A brief description (1-2 sentences)
-2. Full ingredients list with quantities (include pantry staples like salt, oil, etc. as needed)
-3. Step-by-step instructions
-4. Prep time (in minutes)
-5. Cook time (in minutes)
-6. Number of servings
+2. Ingredients separated into what they have vs need to buy
+3. Complete ingredients list with quantities (for display purposes)
+4. Step-by-step instructions
+5. Prep time (in minutes)
+6. Cook time (in minutes)
+7. Number of servings
 
 Format your response as JSON:
 {
   "name": "Recipe Name",
   "description": "Brief description",
-  "ingredients": ["1 cup flour", "2 eggs", ...],
+  "availableIngredients": ["2 chicken breasts", "4 cloves garlic", ...],
+  "neededIngredients": ["1 cup heavy cream", "fresh herbs", ...],
+  "ingredients": ["2 chicken breasts", "4 cloves garlic", "1 cup heavy cream", "fresh herbs", ...],
   "instructions": ["Step 1...", "Step 2...", ...],
   "prepTime": "15",
   "cookTime": "30",
@@ -111,7 +136,11 @@ Only return the JSON object, no other text.`;
 			messages: [
 				{
 					role: 'system',
-					content: 'You are a professional chef. Create detailed, easy-to-follow recipes with accurate measurements and clear instructions. Always respond with valid JSON.'
+					content: `You are a professional chef. Create detailed, easy-to-follow recipes with accurate measurements and clear instructions. Always respond with valid JSON.
+
+${mode === 'restrictive' 
+	? 'You must strictly limit ingredients to what is available plus basic pantry staples.' 
+	: 'You can creatively suggest additional ingredients that would enhance the recipe.'}`
 				},
 				{
 					role: 'user',
@@ -140,10 +169,13 @@ Only return the JSON object, no other text.`;
 			name: recipe.name || recipeName,
 			description: recipe.description || '',
 			ingredients: recipe.ingredients || [],
+			availableIngredients: recipe.availableIngredients || recipe.ingredients || [],
+			neededIngredients: recipe.neededIngredients || [],
 			instructions: recipe.instructions || [],
 			prepTime: recipe.prepTime || '10',
 			cookTime: recipe.cookTime || '20',
-			servings: recipe.servings || 4
+			servings: recipe.servings || 4,
+			mode
 		};
 	} catch {
 		throw new Error('Failed to parse full recipe response');

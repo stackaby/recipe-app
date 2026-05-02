@@ -1,4 +1,4 @@
-import { SPOONACULAR_API_KEY } from '$env/static/private';
+const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
 
 const SPOONACULAR_BASE_URL = 'https://api.spoonacular.com';
 

@@ -1,4 +1,4 @@
-import { VENICE_API_KEY } from '$env/static/private';
+const VENICE_API_KEY = process.env.VENICE_API_KEY;
 import type { RecipeMode } from '$lib/stores/ingredients';
 
 const VENICE_BASE_URL = 'https://api.venice.ai/api/v1';

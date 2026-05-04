@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RecipeHistory from '$lib/components/RecipeHistory.svelte';
 	import RecipeModal from '$lib/components/RecipeModal.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	
 	let { children } = $props();
 </script>
@@ -19,6 +20,7 @@
 </div>
 
 <RecipeModal />
+<Toast />
 
 <style>
 	.app {

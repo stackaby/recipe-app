@@ -24,6 +24,13 @@ export interface SavedRecipe {
 const STORAGE_KEY = 'savedRecipes';
 const MAX_RECIPES = 10;
 
+function generateId(): string {
+	if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+		return crypto.randomUUID();
+	}
+	return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+}
+
 function createRecipeStore() {
 	const stored = browser ? localStorage.getItem(STORAGE_KEY) : null;
 	const initial: SavedRecipe[] = stored ? JSON.parse(stored) : [];
@@ -42,7 +49,7 @@ function createRecipeStore() {
 		saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'createdAt'>): SavedRecipe {
 			const newRecipe: SavedRecipe = {
 				...recipe,
-				id: crypto.randomUUID(),
+				id: generateId(),
 				createdAt: new Date().toISOString()
 			};
 			

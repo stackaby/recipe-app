@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { savedRecipes, type SavedRecipe } from '$lib/stores/recipes';
 	import { modalRecipe, modalLoading, closeRecipeModal } from '$lib/stores/modal';
+	import { toast } from '$lib/stores/toast';
+	import { shareOrCopy } from '$lib/utils/clipboard';
+	import CopyModal from './CopyModal.svelte';
 	
 	let showDeleteConfirm = $state(false);
 	let imageLoading = $state(false);
 	let imageError = $state(false);
 	let localImageUrl = $state<string | null>(null);
+	let showCopyModal = $state(false);
+	let copyModalText = $state('');
 	
 	let lastRecipeId = $state<string | null>(null);
 	
@@ -90,6 +95,60 @@
 			closeRecipeModal();
 		}
 	}
+	
+	function formatShoppingList(recipe: SavedRecipe): string {
+		const lines: string[] = [];
+		lines.push(`Shopping List: ${recipe.name}`);
+		lines.push('');
+		
+		if (recipe.neededIngredients && recipe.neededIngredients.length > 0) {
+			lines.push('What to Buy:');
+			recipe.neededIngredients.forEach(ing => {
+				lines.push(`• ${ing}`);
+			});
+			lines.push('');
+		}
+		
+		const prep = parseInt(recipe.prepTime) || 0;
+		const cook = parseInt(recipe.cookTime) || 0;
+		const total = prep + cook;
+		
+		if (total > 0 || recipe.servings) {
+			lines.push('Details:');
+			if (prep > 0) lines.push(`Prep: ${prep} min`);
+			if (cook > 0) lines.push(`Cook: ${cook} min`);
+			lines.push(`Serves: ${recipe.servings}`);
+			lines.push('');
+		}
+		
+		if (recipe.source === 'found' && recipe.sourceUrl) {
+			lines.push(`Recipe: ${recipe.sourceUrl}`);
+		}
+		
+		return lines.join('\n');
+	}
+	
+	async function handleExport() {
+		if (!$modalRecipe) return;
+		
+		const text = formatShoppingList($modalRecipe);
+		const result = await shareOrCopy($modalRecipe.name, text);
+		
+		if (result === 'shared') {
+			// Native share successful, nothing else needed
+		} else if (result === 'copied') {
+			toast.success('Copied to clipboard!');
+		} else if (result === 'manual') {
+			// Show manual copy modal
+			copyModalText = text;
+			showCopyModal = true;
+		}
+	}
+	
+	function closeCopyModal() {
+		showCopyModal = false;
+		copyModalText = '';
+	}
 </script>
 
 {#if $modalRecipe || $modalLoading}
@@ -107,9 +166,14 @@
 				<div class="modal-header">
 					<button class="close-btn" onclick={closeRecipeModal} aria-label="Close modal">×</button>
 					{#if !showDeleteConfirm}
-						<button class="delete-btn" onclick={() => showDeleteConfirm = true} aria-label="Delete recipe">
-							🗑️
-						</button>
+						<div class="header-actions">
+							<button class="export-btn" onclick={handleExport} aria-label="Export shopping list">
+								📋
+							</button>
+							<button class="delete-btn" onclick={() => showDeleteConfirm = true} aria-label="Delete recipe">
+								🗑️
+							</button>
+						</div>
 					{/if}
 				</div>
 				
@@ -233,6 +297,10 @@
 	</div>
 {/if}
 
+{#if showCopyModal}
+	<CopyModal text={copyModalText} onClose={closeCopyModal} />
+{/if}
+
 <style>
 	.modal-overlay {
 		position: fixed;
@@ -271,7 +339,7 @@
 		border-bottom: 1px solid #f1f5f9;
 	}
 	
-	.close-btn, .delete-btn {
+	.close-btn {
 		background: #f1f5f9;
 		border: none;
 		font-size: 1.25rem;
@@ -293,6 +361,31 @@
 	
 	.delete-btn:hover {
 		background: #fee2e2;
+	}
+	
+	.header-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+	
+	.export-btn, .delete-btn {
+		background: #f1f5f9;
+		border: none;
+		font-size: 1.25rem;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #64748b;
+		transition: background-color 0.15s, color 0.15s;
+	}
+	
+	.export-btn:hover {
+		background: #dbeafe;
+		color: #2563eb;
 	}
 	
 	.delete-confirm {

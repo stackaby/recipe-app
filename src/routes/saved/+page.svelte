@@ -2,6 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { savedRecipes, type SavedRecipe } from '$lib/stores/recipes';
 	import { openRecipeModal } from '$lib/stores/modal';
+	import { toast } from '$lib/stores/toast';
+	import { shareOrCopy } from '$lib/utils/clipboard';
+	import CopyModal from '$lib/components/CopyModal.svelte';
 	
 	function viewRecipe(recipe: SavedRecipe) {
 		openRecipeModal(recipe);
@@ -34,6 +37,63 @@
 		const hours = Math.floor(total / 60);
 		const mins = total % 60;
 		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+	}
+	
+	let showCopyModal = $state(false);
+	let copyModalText = $state('');
+	
+	function formatShoppingList(recipe: SavedRecipe): string {
+		const lines: string[] = [];
+		lines.push(`Shopping List: ${recipe.name}`);
+		lines.push('');
+		
+		if (recipe.neededIngredients && recipe.neededIngredients.length > 0) {
+			lines.push('What to Buy:');
+			recipe.neededIngredients.forEach(ing => {
+				lines.push(`• ${ing}`);
+			});
+			lines.push('');
+		}
+		
+		const prep = parseInt(recipe.prepTime) || 0;
+		const cook = parseInt(recipe.cookTime) || 0;
+		const total = prep + cook;
+		
+		if (total > 0 || recipe.servings) {
+			lines.push('Details:');
+			if (prep > 0) lines.push(`Prep: ${prep} min`);
+			if (cook > 0) lines.push(`Cook: ${cook} min`);
+			lines.push(`Serves: ${recipe.servings}`);
+			lines.push('');
+		}
+		
+		if (recipe.source === 'found' && recipe.sourceUrl) {
+			lines.push(`Recipe: ${recipe.sourceUrl}`);
+		}
+		
+		return lines.join('\n');
+	}
+	
+	async function handleExport(recipe: SavedRecipe, e: Event) {
+		e.stopPropagation();
+		
+		const text = formatShoppingList(recipe);
+		const result = await shareOrCopy(recipe.name, text);
+		
+		if (result === 'shared') {
+			// Native share successful, nothing else needed
+		} else if (result === 'copied') {
+			toast.success('Copied to clipboard!');
+		} else if (result === 'manual') {
+			// Show manual copy modal
+			copyModalText = text;
+			showCopyModal = true;
+		}
+	}
+	
+	function closeCopyModal() {
+		showCopyModal = false;
+		copyModalText = '';
 	}
 </script>
 
@@ -73,14 +133,23 @@
 						</div>
 						<span class="date">{formatDate(recipe.createdAt)}</span>
 					</div>
-					<button class="delete-btn" onclick={(e) => deleteRecipe(recipe.id, e)} aria-label="Delete recipe">
-						×
-					</button>
+					<div class="card-actions">
+						<button class="export-btn" onclick={(e) => handleExport(recipe, e)} aria-label="Export shopping list">
+							📋
+						</button>
+						<button class="delete-btn" onclick={(e) => deleteRecipe(recipe.id, e)} aria-label="Delete recipe">
+							×
+						</button>
+					</div>
 				</div>
 			{/each}
 		</div>
 	{/if}
 </div>
+
+{#if showCopyModal}
+	<CopyModal text={copyModalText} onClose={closeCopyModal} />
+{/if}
 
 <style>
 	.page-content {
@@ -230,6 +299,32 @@
 	.delete-btn:hover {
 		background: #fee2e2;
 		color: #ef4444;
+	}
+	
+	.card-actions {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		display: flex;
+		gap: 0.5rem;
+	}
+	
+	.export-btn {
+		background: #f1f5f9;
+		border: none;
+		font-size: 1rem;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background-color 0.15s;
+	}
+	
+	.export-btn:hover {
+		background: #dbeafe;
 	}
 	
 	.source-badge {

@@ -5,6 +5,12 @@ services:
     image: stackaby/recipe-app:latest
     container_name: recipe-app
     restart: unless-stopped
-    network_mode: host
+    networks:
+      macvlan0:
+        ipv4_address: 192.168.0.22
     env_file:
       - .env
+
+networks:
+  macvlan0:
+    external: true

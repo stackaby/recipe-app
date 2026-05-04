@@ -10,6 +10,7 @@ export interface FoundRecipe {
 	sourceUrl: string;
 	usedIngredients: string[];
 	missedIngredients: string[];
+	ingredients: string[];
 	instructions: string[];
 	prepTime: number;
 	cookTime: number;
@@ -92,6 +93,7 @@ export async function getRecipeDetails(recipeId: number): Promise<FoundRecipe> {
 	const instructions = data.analyzedInstructions?.[0]?.steps?.map(s => s.step) || [];
 	const prepTime = data.prepMinutes || Math.round(data.readyInMinutes * 0.3);
 	const cookTime = data.cookingMinutes || Math.round(data.readyInMinutes * 0.7);
+	const ingredients = data.extendedIngredients?.map(i => i.original) || [];
 	
 	return {
 		id: data.id,
@@ -101,6 +103,7 @@ export async function getRecipeDetails(recipeId: number): Promise<FoundRecipe> {
 		sourceUrl: data.sourceUrl,
 		usedIngredients: [],
 		missedIngredients: [],
+		ingredients,
 		instructions,
 		prepTime,
 		cookTime,

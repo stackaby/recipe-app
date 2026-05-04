@@ -4,12 +4,14 @@
 	import { savedRecipes } from '$lib/stores/recipes';
 	import { modalRecipe, modalLoading, setModalLoading, closeRecipeModal } from '$lib/stores/modal';
 	
-	interface RecipeOption {
-		name: string;
-		description: string;
-		id?: number;
-		image?: string;
-	}
+interface RecipeOption {
+	name: string;
+	description: string;
+	id?: number;
+	image?: string;
+	usedIngredients?: string[];
+	missedIngredients?: string[];
+}
 	
 	let recipes = $state<RecipeOption[]>([]);
 	let loading = $state(true);
@@ -87,10 +89,10 @@
 				
 				const savedRecipe = savedRecipes.saveRecipe({
 					name: data.recipe.name,
-					description: `${data.recipe.usedIngredients?.length || 0} ingredients matched`,
-					ingredients: [],
-					availableIngredients: [],
-					neededIngredients: data.recipe.missedIngredients || [],
+					description: `${recipe.usedIngredients?.length || 0} ingredients matched`,
+					ingredients: data.recipe.ingredients || [],
+					availableIngredients: recipe.usedIngredients || [],
+					neededIngredients: recipe.missedIngredients || [],
 					instructions: data.recipe.instructions,
 					prepTime: String(data.recipe.prepTime || 0),
 					cookTime: String(data.recipe.cookTime || 0),

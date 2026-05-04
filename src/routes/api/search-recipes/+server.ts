@@ -15,7 +15,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			name: r.name,
 			description: `${r.usedIngredients.length} ingredients matched, ${r.missedIngredients.length} needed`,
 			id: r.id,
-			image: r.image
+			image: r.image,
+			usedIngredients: r.usedIngredients,
+			missedIngredients: r.missedIngredients
 		}));
 		
 		return json({ recipes });

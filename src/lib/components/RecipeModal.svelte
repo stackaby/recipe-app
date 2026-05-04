@@ -3,7 +3,11 @@
 	import { modalRecipe, modalLoading, closeRecipeModal } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
 	import { shareOrCopy } from '$lib/utils/clipboard';
+	import { formatTime, getTotalTime } from '$lib/utils/time';
+	import { formatShoppingList } from '$lib/utils/recipe';
 	import CopyModal from './CopyModal.svelte';
+	import Spinner from './Spinner.svelte';
+	import SourceBadge from './SourceBadge.svelte';
 	
 	let showDeleteConfirm = $state(false);
 	let imageLoading = $state(false);
@@ -60,22 +64,6 @@
 		}
 	}
 	
-	function formatTime(minutes: string | number): string {
-		const mins = typeof minutes === 'string' ? parseInt(minutes) : minutes;
-		if (isNaN(mins)) return 'N/A';
-		if (mins < 60) return `${mins} min`;
-		const hours = Math.floor(mins / 60);
-		const remainingMins = mins % 60;
-		return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
-	}
-	
-	function getTotalTime(recipe: SavedRecipe): string {
-		if (!recipe) return '';
-		const prep = parseInt(recipe.prepTime) || 0;
-		const cook = parseInt(recipe.cookTime) || 0;
-		return formatTime(prep + cook);
-	}
-	
 	function handleDelete() {
 		if ($modalRecipe) {
 			savedRecipes.deleteRecipe($modalRecipe.id);
@@ -94,38 +82,6 @@
 			showDeleteConfirm = false;
 			closeRecipeModal();
 		}
-	}
-	
-	function formatShoppingList(recipe: SavedRecipe): string {
-		const lines: string[] = [];
-		lines.push(`Shopping List: ${recipe.name}`);
-		lines.push('');
-		
-		if (recipe.neededIngredients && recipe.neededIngredients.length > 0) {
-			lines.push('What to Buy:');
-			recipe.neededIngredients.forEach(ing => {
-				lines.push(`• ${ing}`);
-			});
-			lines.push('');
-		}
-		
-		const prep = parseInt(recipe.prepTime) || 0;
-		const cook = parseInt(recipe.cookTime) || 0;
-		const total = prep + cook;
-		
-		if (total > 0 || recipe.servings) {
-			lines.push('Details:');
-			if (prep > 0) lines.push(`Prep: ${prep} min`);
-			if (cook > 0) lines.push(`Cook: ${cook} min`);
-			lines.push(`Serves: ${recipe.servings}`);
-			lines.push('');
-		}
-		
-		if (recipe.source === 'found' && recipe.sourceUrl) {
-			lines.push(`Recipe: ${recipe.sourceUrl}`);
-		}
-		
-		return lines.join('\n');
 	}
 	
 	async function handleExport() {
@@ -210,9 +166,7 @@
 					
 					<div class="recipe-content">
 						<header class="recipe-header">
-							<div class="source-badge {$modalRecipe.source}">
-								{$modalRecipe.source === 'ai' ? 'AI Generated' : 'Found Recipe'}
-							</div>
+							<SourceBadge source={$modalRecipe.source} />
 							<h2>{$modalRecipe.name}</h2>
 							<p class="description">{$modalRecipe.description}</p>
 							
@@ -692,22 +646,7 @@
 		text-decoration: underline;
 	}
 	
-	.source-badge {
-		display: inline-block;
-		padding: 0.25rem 0.5rem;
-		border-radius: 9999px;
-		font-size: 0.75rem;
-		font-weight: 500;
-		margin-bottom: 0.5rem;
-	}
-	
-	.source-badge.ai {
-		background: #f3e8ff;
-		color: #7c3aed;
-	}
-	
-	.source-badge.found {
-		background: #e0f2fe;
-		color: #0284c7;
+	.attribution-text a:hover {
+		text-decoration: underline;
 	}
 </style>

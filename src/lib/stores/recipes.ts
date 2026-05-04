@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { generateId } from '$lib/utils/id';
 
 export interface SavedRecipe {
 	id: string;
@@ -23,13 +24,6 @@ export interface SavedRecipe {
 
 const STORAGE_KEY = 'savedRecipes';
 const MAX_RECIPES = 10;
-
-function generateId(): string {
-	if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-		return crypto.randomUUID();
-	}
-	return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
 
 function createRecipeStore() {
 	const stored = browser ? localStorage.getItem(STORAGE_KEY) : null;

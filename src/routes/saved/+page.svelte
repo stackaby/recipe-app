@@ -4,7 +4,10 @@
 	import { openRecipeModal } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
 	import { shareOrCopy } from '$lib/utils/clipboard';
+	import { getTotalTime } from '$lib/utils/time';
+	import { formatShoppingList } from '$lib/utils/recipe';
 	import CopyModal from '$lib/components/CopyModal.svelte';
+	import SourceBadge from '$lib/components/SourceBadge.svelte';
 	
 	function viewRecipe(recipe: SavedRecipe) {
 		openRecipeModal(recipe);
@@ -28,51 +31,8 @@
 		});
 	}
 	
-	function getTotalTime(recipe: SavedRecipe): string {
-		const prep = parseInt(recipe.prepTime) || 0;
-		const cook = parseInt(recipe.cookTime) || 0;
-		const total = prep + cook;
-		if (total < 1) return '';
-		if (total < 60) return `${total} min`;
-		const hours = Math.floor(total / 60);
-		const mins = total % 60;
-		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-	}
-	
 	let showCopyModal = $state(false);
 	let copyModalText = $state('');
-	
-	function formatShoppingList(recipe: SavedRecipe): string {
-		const lines: string[] = [];
-		lines.push(`Shopping List: ${recipe.name}`);
-		lines.push('');
-		
-		if (recipe.neededIngredients && recipe.neededIngredients.length > 0) {
-			lines.push('What to Buy:');
-			recipe.neededIngredients.forEach(ing => {
-				lines.push(`• ${ing}`);
-			});
-			lines.push('');
-		}
-		
-		const prep = parseInt(recipe.prepTime) || 0;
-		const cook = parseInt(recipe.cookTime) || 0;
-		const total = prep + cook;
-		
-		if (total > 0 || recipe.servings) {
-			lines.push('Details:');
-			if (prep > 0) lines.push(`Prep: ${prep} min`);
-			if (cook > 0) lines.push(`Cook: ${cook} min`);
-			lines.push(`Serves: ${recipe.servings}`);
-			lines.push('');
-		}
-		
-		if (recipe.source === 'found' && recipe.sourceUrl) {
-			lines.push(`Recipe: ${recipe.sourceUrl}`);
-		}
-		
-		return lines.join('\n');
-	}
 	
 	async function handleExport(recipe: SavedRecipe, e: Event) {
 		e.stopPropagation();
@@ -122,9 +82,7 @@
 						</div>
 					{/if}
 					<div class="card-content">
-						<div class="source-badge {recipe.source}">
-							{recipe.source === 'ai' ? 'AI Generated' : 'Found Recipe'}
-						</div>
+						<SourceBadge source={recipe.source} />
 						<h3>{recipe.name}</h3>
 						<p class="description">{recipe.description}</p>
 						<div class="meta">
@@ -325,24 +283,5 @@
 	
 	.export-btn:hover {
 		background: #dbeafe;
-	}
-	
-	.source-badge {
-		display: inline-block;
-		padding: 0.25rem 0.5rem;
-		border-radius: 9999px;
-		font-size: 0.75rem;
-		font-weight: 500;
-		margin-bottom: 0.5rem;
-	}
-	
-	.source-badge.ai {
-		background: #f3e8ff;
-		color: #7c3aed;
-	}
-	
-	.source-badge.found {
-		background: #e0f2fe;
-		color: #0284c7;
 	}
 </style>

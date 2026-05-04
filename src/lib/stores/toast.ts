@@ -1,17 +1,10 @@
 import { writable } from 'svelte/store';
+import { generateId } from '$lib/utils/id';
 
 interface Toast {
 	id: string;
 	message: string;
 	type: 'success' | 'error' | 'info';
-}
-
-function generateId(): string {
-	if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-		return crypto.randomUUID();
-	}
-	// Fallback for older browsers
-	return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 function createToast() {

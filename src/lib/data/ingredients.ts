@@ -308,7 +308,7 @@ export const ingredientCategories = {
 		'worcestershire sauce',
 		'teriyaki sauce',
 		'pesto',
-		'alsa',
+		'salsa',
 		'enchilada sauce',
 		'taco sauce',
 		'ranch dressing',

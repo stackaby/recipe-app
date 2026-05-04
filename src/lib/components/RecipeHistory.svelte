@@ -2,17 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { savedRecipes, type SavedRecipe } from '$lib/stores/recipes';
 	import { openRecipeModal } from '$lib/stores/modal';
-	
-	function getTotalTime(recipe: SavedRecipe): string {
-		const prep = parseInt(recipe.prepTime) || 0;
-		const cook = parseInt(recipe.cookTime) || 0;
-		const total = prep + cook;
-		if (total < 1) return '';
-		if (total < 60) return `${total} min`;
-		const hours = Math.floor(total / 60);
-		const mins = total % 60;
-		return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-	}
+	import { getTotalTime } from '$lib/utils/time';
+	import SourceBadge from './SourceBadge.svelte';
 	
 	function viewRecipe(recipe: SavedRecipe) {
 		openRecipeModal(recipe);
@@ -43,7 +34,7 @@
 					<div class="card-content">
 						<h3>{recipe.name}</h3>
 						{#if recipe.source === 'ai'}
-							<span class="source-tag ai">AI</span>
+							<SourceBadge source="ai" variant="short" />
 						{/if}
 						<span class="card-time">{getTotalTime(recipe)}</span>
 					</div>
@@ -162,16 +153,5 @@
 	.card-time {
 		font-size: 0.75rem;
 		color: #64748b;
-	}
-	
-	.source-tag.ai {
-		display: inline-block;
-		padding: 0.125rem 0.375rem;
-		border-radius: 4px;
-		font-size: 0.625rem;
-		font-weight: 500;
-		margin-right: 0.5rem;
-		background: #f3e8ff;
-		color: #7c3aed;
 	}
 </style>

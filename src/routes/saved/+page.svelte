@@ -62,6 +62,9 @@
 						</div>
 					{/if}
 					<div class="card-content">
+						<div class="source-badge {recipe.source}">
+							{recipe.source === 'ai' ? 'AI Generated' : 'Found Recipe'}
+						</div>
 						<h3>{recipe.name}</h3>
 						<p class="description">{recipe.description}</p>
 						<div class="meta">
@@ -227,5 +230,24 @@
 	.delete-btn:hover {
 		background: #fee2e2;
 		color: #ef4444;
+	}
+	
+	.source-badge {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		margin-bottom: 0.5rem;
+	}
+	
+	.source-badge.ai {
+		background: #f3e8ff;
+		color: #7c3aed;
+	}
+	
+	.source-badge.found {
+		background: #e0f2fe;
+		color: #0284c7;
 	}
 </style>

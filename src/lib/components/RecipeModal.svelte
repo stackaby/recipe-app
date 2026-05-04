@@ -146,6 +146,9 @@
 					
 					<div class="recipe-content">
 						<header class="recipe-header">
+							<div class="source-badge {$modalRecipe.source}">
+								{$modalRecipe.source === 'ai' ? 'AI Generated' : 'Found Recipe'}
+							</div>
 							<h2>{$modalRecipe.name}</h2>
 							<p class="description">{$modalRecipe.description}</p>
 							
@@ -594,5 +597,24 @@
 	
 	.attribution-text a:hover {
 		text-decoration: underline;
+	}
+	
+	.source-badge {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		margin-bottom: 0.5rem;
+	}
+	
+	.source-badge.ai {
+		background: #f3e8ff;
+		color: #7c3aed;
+	}
+	
+	.source-badge.found {
+		background: #e0f2fe;
+		color: #0284c7;
 	}
 </style>

@@ -42,6 +42,9 @@
 					{/if}
 					<div class="card-content">
 						<h3>{recipe.name}</h3>
+						{#if recipe.source === 'ai'}
+							<span class="source-tag ai">AI</span>
+						{/if}
 						<span class="card-time">{getTotalTime(recipe)}</span>
 					</div>
 				</button>
@@ -159,5 +162,16 @@
 	.card-time {
 		font-size: 0.75rem;
 		color: #64748b;
+	}
+	
+	.source-tag.ai {
+		display: inline-block;
+		padding: 0.125rem 0.375rem;
+		border-radius: 4px;
+		font-size: 0.625rem;
+		font-weight: 500;
+		margin-right: 0.5rem;
+		background: #f3e8ff;
+		color: #7c3aed;
 	}
 </style>

@@ -187,6 +187,9 @@ interface RecipeOption {
 							<img src={recipe.image} alt={recipe.name} />
 						</div>
 					{/if}
+					<div class="source-badge {$recipeSource}">
+						{$recipeSource === 'ai' ? 'AI Generated' : 'Found Recipe'}
+					</div>
 					<h3>{recipe.name}</h3>
 					<p>{recipe.description}</p>
 				</button>
@@ -366,5 +369,24 @@ interface RecipeOption {
 	
 	.icon {
 		font-size: 1.125rem;
+	}
+	
+	.source-badge {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		border-radius: 9999px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		margin-bottom: 0.5rem;
+	}
+	
+	.source-badge.ai {
+		background: #f3e8ff;
+		color: #7c3aed;
+	}
+	
+	.source-badge.found {
+		background: #e0f2fe;
+		color: #0284c7;
 	}
 </style>

@@ -72,6 +72,12 @@
 		showDeleteConfirm = false;
 	}
 	
+	function toggleStar() {
+		if ($modalRecipe) {
+			savedRecipes.toggleStar($modalRecipe.id);
+		}
+	}
+	
 	function handleOverlayClick() {
 		showDeleteConfirm = false;
 		closeRecipeModal();
@@ -123,6 +129,9 @@
 					<button class="close-btn" onclick={closeRecipeModal} aria-label="Close modal">×</button>
 					{#if !showDeleteConfirm}
 						<div class="header-actions">
+							<button class="star-btn {$modalRecipe.starred ? 'starred' : ''}" onclick={toggleStar} aria-label="Toggle star">
+								{$modalRecipe.starred ? '★' : '☆'}
+							</button>
 							<button class="export-btn" onclick={handleExport} aria-label="Export shopping list">
 								📋
 							</button>
@@ -322,7 +331,7 @@
 		gap: 0.5rem;
 	}
 	
-	.export-btn, .delete-btn {
+	.star-btn, .export-btn, .delete-btn {
 		background: #f1f5f9;
 		border: none;
 		font-size: 1.25rem;
@@ -335,6 +344,15 @@
 		justify-content: center;
 		color: #64748b;
 		transition: background-color 0.15s, color 0.15s;
+	}
+	
+	.star-btn:hover {
+		background: #fef3c7;
+		color: #f59e0b;
+	}
+	
+	.star-btn.starred {
+		color: #f59e0b;
 	}
 	
 	.export-btn:hover {

@@ -5,24 +5,28 @@
 	import { getTotalTime } from '$lib/utils/time';
 	import SourceBadge from './SourceBadge.svelte';
 	
+	let starredRecipes = $derived($savedRecipes.filter(r => r.starred));
+	
 	function viewRecipe(recipe: SavedRecipe) {
 		openRecipeModal(recipe);
 	}
 	
 	function viewAll() {
-		goto('/saved');
+		goto('/recent');
 	}
 </script>
 
-{#if $savedRecipes.length > 0}
+{#if starredRecipes.length > 0}
 	<section class="history-section">
 		<div class="history-header">
-			<h2>Recent Recipes</h2>
+			<button class="header-link" onclick={() => goto('/saved')}>
+				<h2>Starred Recipes</h2>
+			</button>
 			<button class="view-all-btn" onclick={viewAll}>View All →</button>
 		</div>
 		
 		<div class="carousel">
-			{#each $savedRecipes.slice(0, 5) as recipe}
+			{#each starredRecipes as recipe}
 				<button class="recipe-card" onclick={() => viewRecipe(recipe)}>
 					{#if recipe.imageUrl}
 						<div class="card-image">
@@ -38,6 +42,7 @@
 						{/if}
 						<span class="card-time">{getTotalTime(recipe)}</span>
 					</div>
+					<span class="star-badge">⭐</span>
 				</button>
 			{/each}
 		</div>
@@ -46,7 +51,8 @@
 
 <style>
 	.history-section {
-		margin-bottom: 2rem;
+		max-width: 700px;
+		margin: 0 auto 2rem auto;
 	}
 	
 	.history-header {
@@ -61,6 +67,17 @@
 		font-weight: 600;
 		color: #1e293b;
 		margin: 0;
+	}
+	
+	.header-link {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+	}
+	
+	.header-link:hover h2 {
+		color: #3b82f6;
 	}
 	
 	.view-all-btn {
@@ -110,6 +127,7 @@
 		text-align: left;
 		cursor: pointer;
 		transition: all 0.2s;
+		position: relative;
 	}
 	
 	.recipe-card:hover {
@@ -153,5 +171,12 @@
 	.card-time {
 		font-size: 0.75rem;
 		color: #64748b;
+	}
+	
+	.star-badge {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+		font-size: 0.875rem;
 	}
 </style>

@@ -46,11 +46,9 @@
 		const result = await shareOrCopy(recipe.name, text);
 		
 		if (result === 'shared') {
-			// Native share successful, nothing else needed
 		} else if (result === 'copied') {
 			toast.success('Copied to clipboard!');
 		} else if (result === 'manual') {
-			// Show manual copy modal
 			copyModalText = text;
 			showCopyModal = true;
 		}
@@ -63,23 +61,23 @@
 </script>
 
 <svelte:head>
-	<title>Starred Recipes</title>
+	<title>Recent Recipes</title>
 </svelte:head>
 
 <div class="page-content">
 	<header>
 		<button class="back-btn" onclick={goToHome}>← Back</button>
-		<h1>Starred Recipes</h1>
+		<h1>Recent Recipes</h1>
 	</header>
 	
-	{#if $savedRecipes.filter(r => r.starred).length === 0}
+	{#if $savedRecipes.length === 0}
 		<div class="empty-state">
-			<p>No starred recipes yet.</p>
-			<p class="hint">Star recipes from the Recent page to see them here!</p>
+			<p>No recipes yet.</p>
+			<p class="hint">Generate some recipes to see them here!</p>
 		</div>
 	{:else}
 		<div class="recipes-grid">
-			{#each $savedRecipes.filter(r => r.starred) as recipe}
+			{#each $savedRecipes as recipe}
 				<div class="recipe-card" onclick={() => viewRecipe(recipe)} role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && viewRecipe(recipe)}>
 					{#if recipe.imageUrl}
 						<div class="card-image">
@@ -244,29 +242,6 @@
 		color: #94a3b8;
 	}
 	
-	.delete-btn {
-		position: absolute;
-		top: 0.75rem;
-		right: 0.75rem;
-		background: #f1f5f9;
-		border: none;
-		font-size: 1.25rem;
-		width: 2rem;
-		height: 2rem;
-		border-radius: 50%;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #64748b;
-		transition: background-color 0.15s, color 0.15s;
-	}
-	
-	.delete-btn:hover {
-		background: #fee2e2;
-		color: #ef4444;
-	}
-	
 	.card-actions {
 		position: absolute;
 		top: 0.75rem;
@@ -315,5 +290,25 @@
 	
 	.export-btn:hover {
 		background: #dbeafe;
+	}
+	
+	.delete-btn {
+		background: #f1f5f9;
+		border: none;
+		font-size: 1.25rem;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 50%;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #64748b;
+		transition: background-color 0.15s, color 0.15s;
+	}
+	
+	.delete-btn:hover {
+		background: #fee2e2;
+		color: #ef4444;
 	}
 </style>

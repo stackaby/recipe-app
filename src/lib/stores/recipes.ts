@@ -19,6 +19,7 @@ export interface SavedRecipe {
 	sourceName?: string;
 	sourceUrl?: string;
 	imageUrl?: string;
+	starred: boolean;
 	createdAt: string;
 }
 
@@ -40,10 +41,11 @@ function createRecipeStore() {
 	return {
 		subscribe: store.subscribe,
 		
-		saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'createdAt'>): SavedRecipe {
+		saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'starred' | 'createdAt'>): SavedRecipe {
 			const newRecipe: SavedRecipe = {
 				...recipe,
 				id: generateId(),
+				starred: false,
 				createdAt: new Date().toISOString()
 			};
 			
@@ -62,6 +64,12 @@ function createRecipeStore() {
 		updateRecipe(id: string, updates: Partial<SavedRecipe>) {
 			store.update(recipes => 
 				recipes.map(r => r.id === id ? { ...r, ...updates } : r)
+			);
+		},
+		
+		toggleStar(id: string) {
+			store.update(recipes =>
+				recipes.map(r => r.id === id ? { ...r, starred: !r.starred } : r)
 			);
 		},
 		

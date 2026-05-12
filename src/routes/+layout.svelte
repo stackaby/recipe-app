@@ -2,6 +2,7 @@
 	import RecipeHistory from '$lib/components/RecipeHistory.svelte';
 	import RecipeModal from '$lib/components/RecipeModal.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import Timer from '$lib/components/Timer.svelte';
 	
 	let { children } = $props();
 </script>
@@ -21,6 +22,7 @@
 
 <RecipeModal />
 <Toast />
+<Timer />
 
 <style>
 	.app {

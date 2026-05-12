@@ -81,6 +81,112 @@ Only return the JSON array, no other text.`;
 	}
 }
 
+export async function generateRecipesFromRequest(
+	mealRequest: string | null,
+	categories: string[]
+): Promise<RecipeOption[]> {
+	const categoryLabels: Record<string, string> = {
+		'quick': 'quick to make (under 30 minutes)',
+		'dinner': 'suitable for dinner',
+		'lunch': 'suitable for lunch',
+		'breakfast': 'breakfast or brunch',
+		'vegetarian': 'vegetarian (no meat)',
+		'vegan': 'vegan (no animal products)',
+		'healthy': 'healthy and nutritious',
+		'comfort': 'comfort food',
+		'kid-friendly': 'kid-friendly',
+		'date-night': 'impressive for a date night'
+	};
+	
+	const categoryDescriptions = categories
+		.map(c => categoryLabels[c] || c)
+		.join(', ');
+	
+	let prompt: string;
+	
+	if (mealRequest && mealRequest.trim()) {
+		if (categories.length > 0) {
+			prompt = `The user wants to make: "${mealRequest}"
+
+The recipe should be: ${categoryDescriptions}.
+
+Generate 5 creative recipe ideas that match this request. For each recipe, provide:
+1. A catchy recipe name
+2. A brief one-sentence description
+
+Format your response as JSON array:
+[{"name": "Recipe Name", "description": "Brief description"}]
+
+Only return the JSON array, no other text.`;
+		} else {
+			prompt = `The user wants to make: "${mealRequest}"
+
+Generate 5 creative recipe ideas for this dish. For each recipe, provide:
+1. A catchy recipe name
+2. A brief one-sentence description
+
+Format your response as JSON array:
+[{"name": "Recipe Name", "description": "Brief description"}]
+
+Only return the JSON array, no other text.`;
+		}
+	} else {
+		prompt = `Generate 5 creative recipe ideas.
+
+The recipes should be: ${categoryDescriptions}.
+
+For each recipe, provide:
+1. A catchy recipe name
+2. A brief one-sentence description
+
+Format your response as JSON array:
+[{"name": "Recipe Name", "description": "Brief description"}]
+
+Only return the JSON array, no other text.`;
+	}
+
+	const response = await fetch(`${VENICE_BASE_URL}/chat/completions`, {
+		method: 'POST',
+		headers: {
+			'Authorization': `Bearer ${VENICE_API_KEY}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			model: 'llama-3.3-70b',
+			messages: [
+				{
+					role: 'system',
+					content: 'You are a creative chef assistant. Generate delicious, practical recipe ideas. Always respond with valid JSON.'
+				},
+				{
+					role: 'user',
+					content: prompt
+				}
+			],
+			temperature: 0.8
+		})
+	});
+
+	if (!response.ok) {
+		const error = await response.text();
+		throw new Error(`Venice API error: ${response.status} - ${error}`);
+	}
+
+	const data = await response.json();
+	const content = data.choices[0]?.message?.content;
+	
+	if (!content) {
+		throw new Error('No response from Venice API');
+	}
+
+	try {
+		const recipes = JSON.parse(content);
+		return recipes.slice(0, 5);
+	} catch {
+		throw new Error('Failed to parse recipe response');
+	}
+}
+
 export async function generateFullRecipe(
 	recipeName: string,
 	availableIngredients: string[],

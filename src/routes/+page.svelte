@@ -2,12 +2,23 @@
 	import { goto } from '$app/navigation';
 	import IngredientInput from '$lib/components/IngredientInput.svelte';
 	import IngredientChips from '$lib/components/IngredientChips.svelte';
+	import MealRequest from '$lib/components/MealRequest.svelte';
 	import { selectedIngredients, recipeMode, recipeSource } from '$lib/stores/ingredients';
+	import { pageMode } from '$lib/stores/pageMode';
+	import { mealRequest, mealRequestText, mealRequestCategories } from '$lib/stores/mealRequest';
 	
 	function findRecipes() {
-		if ($selectedIngredients.length > 0) {
-			goto('/recipes');
+		if ($pageMode === 'ingredients' && $selectedIngredients.length === 0) {
+			return;
 		}
+		if ($pageMode === 'request' && !$mealRequestText && $mealRequestCategories.length === 0) {
+			return;
+		}
+		goto('/recipes');
+	}
+	
+	function setPageMode(mode: 'ingredients' | 'request') {
+		pageMode.set(mode);
 	}
 </script>
 
@@ -15,79 +26,141 @@
 	<title>Recipe Finder</title>
 </svelte:head>
 
-<header>
-	<h1>What's in your kitchen?</h1>
-	<p>Enter the ingredients you have on hand and we'll find recipes for you.</p>
-</header>
+<div class="tabs">
+	<button 
+		class="tab" 
+		class:active={$pageMode === 'request'}
+		onclick={() => setPageMode('request')}
+	>
+		Meal Request
+	</button>
+	<button 
+		class="tab" 
+		class:active={$pageMode === 'ingredients'}
+		onclick={() => setPageMode('ingredients')}
+	>
+		My Ingredients
+	</button>
+</div>
 
-<section class="input-section">
-	<IngredientInput />
-	<IngredientChips />
-</section>
-
-<section class="toggles-section">
-	<div class="toggle-group">
-		<label class="toggle-label">Recipe Mode</label>
-		<div class="mode-toggle">
-			<button 
-				class="mode-btn open{$recipeMode === 'open' ? ' active' : ''}" 
-				onclick={() => recipeMode.set('open')}
-				aria-pressed={$recipeMode === 'open'}
-			>
-				Open
-			</button>
-			<button 
-				class="mode-btn restrictive{$recipeMode === 'restrictive' ? ' active' : ''}" 
-				onclick={() => recipeMode.set('restrictive')}
-				aria-pressed={$recipeMode === 'restrictive'}
-			>
-				Restrictive
-			</button>
-		</div>
-		<p class="toggle-hint">
-			{#if $recipeMode === 'open'}
-				Suggests additional ingredients to buy
-			{:else}
-				Uses only what you have (plus pantry staples)
-			{/if}
-		</p>
-	</div>
+{#if $pageMode === 'request'}
+	<header>
+		<h1>What would you like to cook?</h1>
+		<p>Tell us what you're craving or pick some categories</p>
+	</header>
 	
-	<div class="toggle-group">
-		<label class="toggle-label">Recipe Source</label>
-		<div class="source-toggle">
-			<button 
-				class="source-btn ai{$recipeSource === 'ai' ? ' active' : ''}" 
-				onclick={() => recipeSource.set('ai')}
-				aria-pressed={$recipeSource === 'ai'}
-			>
-				AI Generated
-			</button>
-			<button 
-				class="source-btn found{$recipeSource === 'found' ? ' active' : ''}" 
-				onclick={() => recipeSource.set('found')}
-				aria-pressed={$recipeSource === 'found'}
-			>
-				Found Recipes
-			</button>
+	<section class="input-section">
+		<MealRequest />
+	</section>
+{:else}
+	<header>
+		<h1>What's in your kitchen?</h1>
+		<p>Enter the ingredients you have on hand and we'll find recipes for you.</p>
+	</header>
+	
+	<section class="input-section">
+		<IngredientInput />
+		<IngredientChips />
+	</section>
+
+	<section class="toggles-section">
+		<div class="toggle-group">
+			<label class="toggle-label">Recipe Mode</label>
+			<div class="mode-toggle">
+				<button 
+					class="mode-btn open{$recipeMode === 'open' ? ' active' : ''}" 
+					onclick={() => recipeMode.set('open')}
+					aria-pressed={$recipeMode === 'open'}
+				>
+					Open
+				</button>
+				<button 
+					class="mode-btn restrictive{$recipeMode === 'restrictive' ? ' active' : ''}" 
+					onclick={() => recipeMode.set('restrictive')}
+					aria-pressed={$recipeMode === 'restrictive'}
+				>
+					Restrictive
+				</button>
+			</div>
+			<p class="toggle-hint">
+				{#if $recipeMode === 'open'}
+					Suggests additional ingredients to buy
+				{:else}
+					Uses only what you have (plus pantry staples)
+				{/if}
+			</p>
 		</div>
-		<p class="toggle-hint">
-			{#if $recipeSource === 'ai'}
-				Created by Venice AI
-			{:else}
-				From Spoonacular database
-			{/if}
-		</p>
-	</div>
-</section>
+		
+		<div class="toggle-group">
+			<label class="toggle-label">Recipe Source</label>
+			<div class="source-toggle">
+				<button 
+					class="source-btn ai{$recipeSource === 'ai' ? ' active' : ''}" 
+					onclick={() => recipeSource.set('ai')}
+					aria-pressed={$recipeSource === 'ai'}
+				>
+					AI Generated
+				</button>
+				<button 
+					class="source-btn found{$recipeSource === 'found' ? ' active' : ''}" 
+					onclick={() => recipeSource.set('found')}
+					aria-pressed={$recipeSource === 'found'}
+				>
+					Found Recipes
+				</button>
+			</div>
+			<p class="toggle-hint">
+				{#if $recipeSource === 'ai'}
+					Created by Venice AI
+				{:else}
+					From Spoonacular database
+				{/if}
+			</p>
+		</div>
+	</section>
+{/if}
 
 <section class="action-section">
-	<button class="find-recipes-btn" disabled={$selectedIngredients.length === 0} onclick={findRecipes}>
+	<button 
+		class="find-recipes-btn" 
+		disabled={($pageMode === 'ingredients' && $selectedIngredients.length === 0) || ($pageMode === 'request' && !$mealRequestText && $mealRequestCategories.length === 0)} 
+		onclick={findRecipes}
+	>
 		Find Recipes
 	</button>
 </section>
 
 <style>
+	.tabs {
+		display: flex;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+	}
+	
+	.tab {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		border: 2px solid #e2e8f0;
+		border-radius: 8px;
+		background: white;
+		color: #64748b;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	
+	.tab:hover:not(.active) {
+		background: #f8fafc;
+		border-color: #cbd5e1;
+	}
+	
+	.tab.active {
+		background: #3b82f6;
+		border-color: #3b82f6;
+		color: white;
+	}
+	
 	header {
 		text-align: center;
 		margin-bottom: 2.5rem;

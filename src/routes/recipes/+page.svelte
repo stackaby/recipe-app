@@ -1,25 +1,49 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { selectedIngredients, recipeMode, recipeSource } from '$lib/stores/ingredients';
+	import { pageMode } from '$lib/stores/pageMode';
+	import { mealRequestText, mealRequestCategories, MEAL_CATEGORIES } from '$lib/stores/mealRequest';
 	import { savedRecipes } from '$lib/stores/recipes';
 	import { modalRecipe, modalLoading, setModalLoading, closeRecipeModal } from '$lib/stores/modal';
 	import SourceBadge from '$lib/components/SourceBadge.svelte';
 	
-interface RecipeOption {
-	name: string;
-	description: string;
-	id?: number;
-	image?: string;
-	usedIngredients?: string[];
-	missedIngredients?: string[];
-}
+	interface RecipeOption {
+		name: string;
+		description: string;
+		id?: number;
+		image?: string;
+		usedIngredients?: string[];
+		missedIngredients?: string[];
+	}
 	
 	let recipes = $state<RecipeOption[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	
+	function getSubtitle(): string {
+		if ($pageMode === 'request') {
+			const parts: string[] = [];
+			if ($mealRequestText) {
+				parts.push($mealRequestText);
+			}
+			if ($mealRequestCategories.length > 0) {
+				const labels = $mealRequestCategories.map((c: string) => {
+					const cat = MEAL_CATEGORIES.find(cat => cat.id === c);
+					return cat?.label || c;
+				});
+				parts.push(labels.join(', '));
+			}
+			return parts.join(' • ');
+		}
+		return $selectedIngredients.join(', ');
+	}
+	
 	async function generateRecipes() {
-		if ($selectedIngredients.length === 0) {
+		if ($pageMode === 'ingredients' && $selectedIngredients.length === 0) {
+			goto('/');
+			return;
+		}
+		if ($pageMode === 'request' && !$mealRequestText && $mealRequestCategories.length === 0) {
 			goto('/');
 			return;
 		}
@@ -29,7 +53,24 @@ interface RecipeOption {
 		recipes = [];
 		
 		try {
-			if ($recipeSource === 'found') {
+			if ($pageMode === 'request') {
+				const response = await fetch('/api/generate-meal-request', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						mealRequest: $mealRequestText || null,
+						categories: $mealRequestCategories
+					})
+				});
+				
+				const data = await response.json();
+				
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to generate recipes');
+				}
+				
+				recipes = data.recipes;
+			} else if ($recipeSource === 'found') {
 				const response = await fetch('/api/search-recipes', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -165,14 +206,14 @@ interface RecipeOption {
 <div class="page-content">
 	<header>
 		<button class="back-btn" onclick={goToHome}>← Back</button>
-		<h1>{ $recipeSource === 'ai' ? 'Recipe Ideas' : 'Found Recipes' }</h1>
-		<p class="subtitle">Based on: {$selectedIngredients.join(', ')}</p>
+		<h1>{ $pageMode === 'request' ? 'Recipe Ideas' : ($recipeSource === 'ai' ? 'Recipe Ideas' : 'Found Recipes') }</h1>
+		<p class="subtitle">{getSubtitle()}</p>
 	</header>
 	
 	{#if loading}
 		<div class="loading">
 			<div class="spinner"></div>
-			<p>{$recipeSource === 'ai' ? 'Generating delicious recipes...' : 'Searching for recipes...'}</p>
+			<p>Generating delicious recipes...</p>
 		</div>
 	{:else if error}
 		<div class="error">
@@ -188,7 +229,11 @@ interface RecipeOption {
 							<img src={recipe.image} alt={recipe.name} />
 						</div>
 					{/if}
-					<SourceBadge source={$recipeSource} />
+					{#if $pageMode === 'ingredients'}
+						<SourceBadge source={$recipeSource} />
+					{:else}
+						<SourceBadge source="ai" />
+					{/if}
 					<h3>{recipe.name}</h3>
 					<p>{recipe.description}</p>
 				</button>
@@ -198,7 +243,7 @@ interface RecipeOption {
 		<div class="actions">
 			<button class="regenerate-btn" onclick={generateRecipes}>
 				<span class="icon">🔄</span>
-				{$recipeSource === 'ai' ? 'Generate New Recipes' : 'Search Again'}
+				Generate New Recipes
 			</button>
 		</div>
 	{/if}

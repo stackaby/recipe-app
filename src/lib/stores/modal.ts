@@ -1,4 +1,5 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
+import { savedRecipes } from './recipes';
 import type { SavedRecipe } from './recipes';
 
 export const modalRecipe = writable<SavedRecipe | null>(null);
@@ -16,4 +17,14 @@ export function closeRecipeModal() {
 
 export function setModalLoading(loading: boolean) {
 	modalLoading.set(loading);
+}
+
+export function syncModalRecipe() {
+	const current = get(modalRecipe);
+	if (current) {
+		const updated = get(savedRecipes).find(r => r.id === current.id);
+		if (updated) {
+			modalRecipe.set(updated);
+		}
+	}
 }

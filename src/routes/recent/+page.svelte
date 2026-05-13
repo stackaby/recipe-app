@@ -8,6 +8,7 @@
 	import { formatShoppingList } from '$lib/utils/recipe';
 	import CopyModal from '$lib/components/CopyModal.svelte';
 	import SourceBadge from '$lib/components/SourceBadge.svelte';
+	import AddToWeekButton from '$lib/components/AddToWeekButton.svelte';
 	
 	function viewRecipe(recipe: SavedRecipe) {
 		openRecipeModal(recipe);
@@ -94,7 +95,7 @@
 						</div>
 						<span class="date">{formatDate(recipe.createdAt)}</span>
 					</div>
-					<div class="card-actions">
+					<div class="card-actions"><AddToWeekButton recipeId={recipe.id} />
 						<button class="star-btn {recipe.starred ? 'starred' : ''}" onclick={(e) => toggleStar(recipe.id, e)} aria-label="Toggle star">
 							{recipe.starred ? '★' : '☆'}
 						</button>

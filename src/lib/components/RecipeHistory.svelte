@@ -4,6 +4,7 @@
 	import { openRecipeModal } from '$lib/stores/modal';
 	import { getTotalTime } from '$lib/utils/time';
 	import SourceBadge from './SourceBadge.svelte';
+	import AddToWeekButton from './AddToWeekButton.svelte';
 	
 	let starredRecipes = $derived($savedRecipes.filter(r => r.starred));
 	
@@ -41,6 +42,7 @@
 							<SourceBadge source="ai" variant="short" />
 						{/if}
 						<span class="card-time">{getTotalTime(recipe)}</span>
+						<AddToWeekButton recipeId={recipe.id} />
 					</div>
 					<span class="star-badge">⭐</span>
 				</button>

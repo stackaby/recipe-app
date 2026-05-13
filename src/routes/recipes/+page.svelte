@@ -6,6 +6,7 @@
 	import { savedRecipes } from '$lib/stores/recipes';
 	import { modalRecipe, modalLoading, setModalLoading, closeRecipeModal } from '$lib/stores/modal';
 	import SourceBadge from '$lib/components/SourceBadge.svelte';
+	import AddToWeekButton from '$lib/components/AddToWeekButton.svelte';
 	
 	interface RecipeOption {
 		name: string;

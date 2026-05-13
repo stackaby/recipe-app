@@ -155,7 +155,7 @@
 		background: white;
 		border-radius: 16px;
 		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-		z-index: 101;
+		z-index: 1001;
 		overflow: hidden;
 		transition: transform 0.1s;
 	}

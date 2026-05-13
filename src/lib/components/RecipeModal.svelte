@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { savedRecipes, type SavedRecipe } from '$lib/stores/recipes';
-	import { modalRecipe, modalLoading, closeRecipeModal } from '$lib/stores/modal';
+	import { modalRecipe, modalLoading, closeRecipeModal, syncModalRecipe } from '$lib/stores/modal';
 	import { toast } from '$lib/stores/toast';
+	import { timer } from '$lib/stores/timer';
 	import { shareOrCopy } from '$lib/utils/clipboard';
 	import { formatTime, getTotalTime } from '$lib/utils/time';
 	import { formatShoppingList } from '$lib/utils/recipe';
 	import CopyModal from './CopyModal.svelte';
 	import Spinner from './Spinner.svelte';
 	import SourceBadge from './SourceBadge.svelte';
+	import AddToWeekButton from './AddToWeekButton.svelte';
 	
 	let showDeleteConfirm = $state(false);
 	let imageLoading = $state(false);
@@ -75,6 +77,7 @@
 	function toggleStar() {
 		if ($modalRecipe) {
 			savedRecipes.toggleStar($modalRecipe.id);
+			syncModalRecipe();
 		}
 	}
 	
@@ -131,6 +134,10 @@
 						<div class="header-actions">
 							<button class="star-btn {$modalRecipe.starred ? 'starred' : ''}" onclick={toggleStar} aria-label="Toggle star">
 								{$modalRecipe.starred ? '★' : '☆'}
+							</button>
+							<AddToWeekButton recipeId={$modalRecipe.id} />
+							<button class="timer-btn {$timer.visible ? 'active' : ''}" onclick={() => timer.toggleVisibility()} aria-label="Timer">
+								⏱
 							</button>
 							<button class="export-btn" onclick={handleExport} aria-label="Export shopping list">
 								📋
@@ -331,7 +338,7 @@
 		gap: 0.5rem;
 	}
 	
-	.star-btn, .export-btn, .delete-btn {
+	.star-btn, .export-btn, .delete-btn, .timer-btn {
 		background: #f1f5f9;
 		border: none;
 		font-size: 1.25rem;
@@ -353,6 +360,16 @@
 	
 	.star-btn.starred {
 		color: #f59e0b;
+	}
+	
+	.timer-btn:hover {
+		background: #dbeafe;
+		color: #2563eb;
+	}
+	
+	.timer-btn.active {
+		background: #3b82f6;
+		color: white;
 	}
 	
 	.export-btn:hover {

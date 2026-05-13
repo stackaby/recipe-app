@@ -3,6 +3,9 @@
 	import RecipeModal from '$lib/components/RecipeModal.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import Timer from '$lib/components/Timer.svelte';
+	import MealPlanButton from '$lib/components/MealPlanButton.svelte';
+	import MealPlanModal from '$lib/components/MealPlanModal.svelte';
+	import { mealPlanModalVisible } from '$lib/stores/mealPlan';
 	
 	let { children } = $props();
 </script>
@@ -23,6 +26,10 @@
 <RecipeModal />
 <Toast />
 <Timer />
+<MealPlanButton />
+{#if $mealPlanModalVisible}
+	<MealPlanModal onclose={() => mealPlanModalVisible.set(false)} />
+{/if}
 
 <style>
 	.app {
